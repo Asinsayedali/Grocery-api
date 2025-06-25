@@ -1,6 +1,7 @@
 from ninja import Router, Schema, NinjaAPI
 from .models import Grocerydb
-from .utils import generate_response  
+from .utils import generate_response 
+from django.db import connection 
 
 api = NinjaAPI()
 
@@ -72,3 +73,22 @@ def generate_recipe(request, userid: int, prompt: str):
         "responseid": str(record.id),
         "output": response
     }
+
+
+@api.get("/db-status")
+def db_status(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        
+        total_records = Grocerydb.objects.count()
+
+        return {
+            "database": "connected",
+            "total_records": total_records
+        }
+    except Exception as e:
+        return {
+            "database": "error",
+            "message": str(e)
+        }
